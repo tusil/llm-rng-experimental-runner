@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { RngPort } from '../../src/application/ports/RngPort.js';
 import { CryptoRngAdapter } from '../../src/infrastructure/rng/CryptoRngAdapter.js';
 import { BufferedRngAdapter } from '../../src/infrastructure/rng/BufferedRngAdapter.js';
 
@@ -14,10 +15,10 @@ describe('RNG adapters', () => {
   });
 
   it('BufferedRngAdapter buffers inner calls', () => {
-    const inner = {
+    const inner: RngPort = {
       nextUint32: vi.fn(() => 7),
       nextFloat01: vi.fn(() => 0.1),
-      pickOne: vi.fn(<T>(items: readonly T[]) => items[0])
+      pickOne: <T>(items: readonly T[]) => items[0]
     };
     const buffered = new BufferedRngAdapter(inner, 4);
     buffered.nextUint32();

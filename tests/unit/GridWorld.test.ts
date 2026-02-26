@@ -12,7 +12,7 @@ describe('GridWorld determinism', () => {
   });
 
   it('invertRewards flips reward after shock', () => {
-    const world = new GridWorld(9, 1, { atStep: 1, type: 'invertRewards' });
+    const world = new GridWorld(9, 4, { atStep: 1, type: 'invertRewards' });
     const r1 = world.step('STAY').reward;
     const r2 = world.step('STAY').reward;
     expect(r1).toBe(-r2);
