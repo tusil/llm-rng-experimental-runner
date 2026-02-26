@@ -10,15 +10,16 @@ import { SystemClockAdapter } from '../infrastructure/clock/SystemClockAdapter.j
 import { GridWorld } from '../infrastructure/env/GridWorld.js';
 import { NdjsonLoggerAdapter } from '../infrastructure/log/NdjsonLoggerAdapter.js';
 import { LmStudioPolicyAdapter } from '../infrastructure/policy/LmStudioPolicyAdapter.js';
+import { MockPolicyAdapter } from '../infrastructure/policy/MockPolicyAdapter.js';
 import { BufferedRngAdapter } from '../infrastructure/rng/BufferedRngAdapter.js';
 import { CryptoRngAdapter } from '../infrastructure/rng/CryptoRngAdapter.js';
 import { FileRngAdapter } from '../infrastructure/rng/FileRngAdapter.js';
 import { QrngUsbAdapterStub } from '../infrastructure/rng/QrngUsbAdapter.stub.js';
 import type { RngPort } from '../application/ports/RngPort.js';
 
-export const buildContainer = (config: RunConfig) => {
+export const buildContainer = (config: RunConfig, options?: { experimentName?: string }) => {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const outRoot = join(config.logging.outDir, stamp);
+  const outRoot = options?.experimentName ? join(config.logging.outDir, stamp, options.experimentName) : join(config.logging.outDir, stamp);
   mkdirSync(outRoot, { recursive: true });
 
   let baseRng: RngPort;
@@ -28,17 +29,22 @@ export const buildContainer = (config: RunConfig) => {
 
   const rng = config.rng.bufferBytes ? new BufferedRngAdapter(baseRng, Math.floor(config.rng.bufferBytes / 4)) : baseRng;
 
-  const runExperiment = new RunExperiment(config, (_outDir) => {
+  const policy =
+    config.policy.driver === 'lmstudio'
+      ? new LmStudioPolicyAdapter({
+          baseUrl: config.policy.baseUrl,
+          model: config.policy.model,
+          rng,
+          clock: new SystemClockAdapter()
+        })
+      : new MockPolicyAdapter(config.policy);
+
+  const runExperiment = new RunExperiment(config, (runOutDir) => {
     return new RunSingle({
       config,
       rng,
-      policy: new LmStudioPolicyAdapter({
-        baseUrl: config.policy.baseUrl,
-        model: config.policy.model,
-        rng,
-        clock: new SystemClockAdapter()
-      }),
-      logger: new NdjsonLoggerAdapter(join(outRoot, 'run.ndjson'), join(outRoot, 'run.summary.json')),
+      policy,
+      logger: new NdjsonLoggerAdapter(join(runOutDir, 'run.ndjson'), join(runOutDir, 'run.summary.json')),
       envFactory: (seed) => new GridWorld(config.env.size, seed, config.shock),
       memoryService: new MemoryService(rng),
       promptService: new PromptService(),

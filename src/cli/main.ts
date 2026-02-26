@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { loadConfig } from '../composition/config/loadConfig.js';
 import { buildContainer } from '../composition/buildContainer.js';
+import { discoverExperiments, experimentNameToPath } from '../composition/experiments/discoverExperiments.js';
 import type { RunSummary } from '../domain/experiment/RunSummary.js';
 
 const args = process.argv.slice(2);
@@ -90,12 +92,52 @@ const compareSummaries = (filePaths: string[]): void => {
   }
 };
 
+const runConfiguredExperiment = async (configPath: string, experimentName?: string): Promise<void> => {
+  const config = loadConfig(configPath);
+  const container = buildContainer(config, experimentName ? { experimentName } : undefined);
+  writeFileSync(join(container.outRoot, 'config.resolved.json'), `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+
+  const summaries = await container.runExperiment.execute(container.outRoot);
+  container.writeExperimentSummary({
+    runs: summaries.length,
+    totalRewardMean: summaries.reduce((a, b) => a + b.totalReward, 0) / Math.max(1, summaries.length),
+    summaries
+  });
+
+  const summaryPath = `${container.outRoot}/experiment.summary.json`;
+  console.log(`Experiment complete. Output written to ${container.outRoot}`);
+  console.log('Use these commands to inspect and compare results:');
+  console.log(`  node dist/cli/main.js results --file ${summaryPath}`);
+  console.log(`  node dist/cli/main.js compare --files ${summaryPath} ./out/<other-run-stamp>/experiment.summary.json`);
+};
+
 const run = async () => {
   const cmd = args[0];
   if (!cmd) {
     throw new Error(
-      'Usage: node dist/cli/main.js <run|results|compare>\n  run --config ./config.json [--dry-run]\n  results --file ./out/<stamp>/experiment.summary.json\n  compare --files ./out/a/experiment.summary.json ./out/b/experiment.summary.json [more files...]'
+      'Usage: node dist/cli/main.js <run|results|compare|experiments:list|experiments:run>\n  run --config ./config.json [--dry-run]\n  experiments:list\n  experiments:run --name sanity/env-determinism\n  results --file ./out/<stamp>/experiment.summary.json\n  compare --files ./out/a/experiment.summary.json ./out/b/experiment.summary.json [more files...]'
     );
+  }
+
+  if (cmd === 'experiments:list') {
+    const experimentsRoot = join(process.cwd(), 'experiments');
+    const names = discoverExperiments(experimentsRoot);
+    for (const name of names) console.log(name);
+    return;
+  }
+
+  if (cmd === 'experiments:run') {
+    const nameIndex = args.indexOf('--name');
+    if (nameIndex === -1 || !args[nameIndex + 1]) {
+      throw new Error('experiments:run requires --name <experiment/name>');
+    }
+
+    const experimentsRoot = join(process.cwd(), 'experiments');
+    const experimentName = args[nameIndex + 1];
+    const configPath = experimentNameToPath(experimentsRoot, experimentName);
+    if (!existsSync(configPath)) throw new Error(`Experiment not found: ${experimentName}`);
+    await runConfiguredExperiment(configPath, experimentName);
+    return;
   }
 
   if (cmd === 'results') {
@@ -123,28 +165,14 @@ const run = async () => {
   }
   const dryRun = args.includes('--dry-run');
   const configPath = args[configIndex + 1];
-  const config = loadConfig(configPath);
 
   if (dryRun) {
+    const config = loadConfig(configPath);
     console.log(JSON.stringify(config, null, 2));
     return;
   }
 
-  const container = buildContainer(config);
-  const summaries = await container.runExperiment.execute(container.outRoot);
-  container.writeExperimentSummary({
-    runs: summaries.length,
-    totalRewardMean: summaries.reduce((a, b) => a + b.totalReward, 0) / Math.max(1, summaries.length),
-    summaries
-  });
-
-  const summaryPath = `${container.outRoot}/experiment.summary.json`;
-  console.log(`Experiment complete. Output written to ${container.outRoot}`);
-  console.log('Use these commands to inspect and compare results:');
-  console.log(`  node dist/cli/main.js results --file ${summaryPath}`);
-  console.log(
-    `  node dist/cli/main.js compare --files ${summaryPath} ./out/<other-run-stamp>/experiment.summary.json`
-  );
+  await runConfiguredExperiment(configPath);
 };
 
 run().catch((err) => {

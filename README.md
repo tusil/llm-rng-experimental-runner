@@ -23,6 +23,16 @@ npm run build
 node dist/cli/main.js run --config ./config.example.json
 ```
 
+### List experiment configs
+```bash
+node dist/cli/main.js experiments:list
+```
+
+### Run experiment from `experiments/` by name
+```bash
+node dist/cli/main.js experiments:run --name sanity/env-determinism
+```
+
 The runner prints periodic progress lines (about every 10% of configured steps) so you can monitor each run while it is executing.
 
 After each run, the CLI also prints copy/paste-ready commands for:
@@ -45,6 +55,8 @@ You can compare more than two files by appending additional paths after `--files
 ```bash
 node dist/cli/main.js run --config ./config.example.json --dry-run
 ```
+
+When you run with `run` or `experiments:run`, the validated config is copied to `config.resolved.json` in the output folder for reproducibility.
 
 ## Useful commands
 ```bash

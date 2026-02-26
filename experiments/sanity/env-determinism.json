@@ -1,0 +1,19 @@
+{
+  "runs": 2,
+  "stepsPerRun": 20,
+  "env": { "size": 7, "envSeed": 123 },
+  "shock": { "atStep": 10, "type": "invertRewards" },
+  "agent": {
+    "epsilon": 0,
+    "memory": { "kRecent": 3, "explorationProb": 0 }
+  },
+  "rng": {
+    "driver": "crypto"
+  },
+  "policy": {
+    "driver": "mock",
+    "mode": "fixed",
+    "action": "RIGHT"
+  },
+  "logging": { "outDir": "out" }
+}
