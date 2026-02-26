@@ -23,6 +23,8 @@ npm run build
 node dist/cli/main.js run --config ./config.example.json
 ```
 
+The runner prints periodic progress lines (about every 10% of configured steps) so you can monitor each run while it is executing.
+
 ### Dry run
 ```bash
 node dist/cli/main.js run --config ./config.example.json --dry-run

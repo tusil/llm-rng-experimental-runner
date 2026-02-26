@@ -34,6 +34,8 @@ export class RunSingle {
     let cumulativeReward = 0;
     const errorCounts = { timeouts: 0, invalidOutputs: 0, fallbacks: 0 };
 
+    const stepProgressEvery = Math.max(1, Math.min(100, Math.floor(cfg.stepsPerRun / 10) || 1));
+
     for (let step = 0; step < cfg.stepsPerRun; step += 1) {
       const observation = env.currentObservation();
       const memItems = this.deps.memoryService.selectMemory(
@@ -97,6 +99,13 @@ export class RunSingle {
         policyLatencyMs: proposal.latencyMs,
         observationHash: createHash('sha1').update(observationText).digest('hex')
       });
+
+      if ((step + 1) % stepProgressEvery === 0 || step === cfg.stepsPerRun - 1) {
+        const pct = Math.round(((step + 1) / cfg.stepsPerRun) * 100);
+        console.log(
+          `[progress] run=${runId} step=${step + 1}/${cfg.stepsPerRun} (${pct}%) reward=${cumulativeReward.toFixed(2)}`
+        );
+      }
     }
 
     const ma = this.deps.metricsService.movingAverage(rewards, 50);
