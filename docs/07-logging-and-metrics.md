@@ -4,3 +4,5 @@
 - Per-run summary JSON and experiment summary JSON are generated
 - Metrics include moving average reward, recovery time, and JS-divergence action drift
 - Console progress lines are emitted during each run (periodic step, percent complete, cumulative reward)
+- `results` CLI command prints a human-readable view of `experiment.summary.json`
+- `compare` CLI command prints a human-readable side-by-side aggregate comparison for 2+ summary files
