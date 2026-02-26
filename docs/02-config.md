@@ -24,6 +24,8 @@ Names are derived from paths relative to `experiments/` without `.json`.
 node dist/cli/main.js experiments:run --name sanity/env-determinism
 ```
 
+`experiments:run` also auto-prints the run summary (equivalent to calling `results --file` on the generated summary file).
+
 The CLI resolves this to `experiments/sanity/env-determinism.json`, validates it with Zod, and writes output to:
 
 ```text

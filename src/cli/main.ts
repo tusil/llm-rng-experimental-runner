@@ -92,7 +92,11 @@ const compareSummaries = (filePaths: string[]): void => {
   }
 };
 
-const runConfiguredExperiment = async (configPath: string, experimentName?: string): Promise<void> => {
+const runConfiguredExperiment = async (
+  configPath: string,
+  experimentName?: string,
+  options?: { autoPrintResults?: boolean }
+): Promise<void> => {
   const config = loadConfig(configPath);
   const container = buildContainer(config, experimentName ? { experimentName } : undefined);
   writeFileSync(join(container.outRoot, 'config.resolved.json'), `${JSON.stringify(config, null, 2)}\n`, 'utf8');
@@ -106,6 +110,11 @@ const runConfiguredExperiment = async (configPath: string, experimentName?: stri
 
   const summaryPath = `${container.outRoot}/experiment.summary.json`;
   console.log(`Experiment complete. Output written to ${container.outRoot}`);
+
+  if (options?.autoPrintResults) {
+    printSummary(summaryPath);
+  }
+
   console.log('Use these commands to inspect and compare results:');
   console.log(`  node dist/cli/main.js results --file ${summaryPath}`);
   console.log(`  node dist/cli/main.js compare --files ${summaryPath} ./out/<other-run-stamp>/experiment.summary.json`);
@@ -136,7 +145,7 @@ const run = async () => {
     const experimentName = args[nameIndex + 1];
     const configPath = experimentNameToPath(experimentsRoot, experimentName);
     if (!existsSync(configPath)) throw new Error(`Experiment not found: ${experimentName}`);
-    await runConfiguredExperiment(configPath, experimentName);
+    await runConfiguredExperiment(configPath, experimentName, { autoPrintResults: true });
     return;
   }
 

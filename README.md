@@ -35,9 +35,11 @@ node dist/cli/main.js experiments:run --name sanity/env-determinism
 
 The runner prints periodic progress lines (about every 10% of configured steps) so you can monitor each run while it is executing.
 
-After each run, the CLI also prints copy/paste-ready commands for:
+After each run, the CLI prints copy/paste-ready commands for:
 - viewing a human-readable summary of that run's experiment output
 - comparing that output with one or more other experiment outputs
+
+When you run `experiments:run`, the CLI now automatically prints the human-readable summary for that run immediately after completion.
 
 ### Print results (human-readable)
 ```bash
