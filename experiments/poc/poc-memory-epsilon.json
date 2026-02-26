@@ -1,0 +1,23 @@
+{
+  "runs": 3,
+  "stepsPerRun": 100,
+  "env": { "size": 9, "envSeed": 42 },
+  "shock": { "atStep": 50, "type": "invertRewards" },
+  "agent": {
+    "epsilon": 0.2,
+    "memory": { "kRecent": 8, "explorationProb": 0.3 }
+  },
+  "rng": {
+    "driver": "crypto",
+    "bufferBytes": 2048
+  },
+  "policy": {
+    "driver": "lmstudio",
+    "baseUrl": "http://127.0.0.1:1234/v1",
+    "model": "local-model",
+    "temperature": 0.1,
+    "maxOutputTokens": 8,
+    "timeoutMs": 5000
+  },
+  "logging": { "outDir": "out" }
+}

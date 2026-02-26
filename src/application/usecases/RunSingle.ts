@@ -27,7 +27,7 @@ export class RunSingle {
 
   async execute(runId: string, runIndex: number): Promise<RunSummary> {
     const cfg = this.deps.config;
-    const env = this.deps.envFactory(cfg.env.envSeed + runIndex);
+    const env = this.deps.envFactory(cfg.env.envSeed);
     const memory: MemoryItem[] = [];
     const rewards: number[] = [];
     const actions: Action[] = [];
@@ -45,13 +45,16 @@ export class RunSingle {
       );
       const observationText = this.deps.promptService.observationToText(observation);
       const memoryText = this.deps.memoryService.toText(memItems);
+      const temperature = cfg.policy.driver === 'lmstudio' ? cfg.policy.temperature : 0;
+      const maxOutputTokens = cfg.policy.driver === 'lmstudio' ? cfg.policy.maxOutputTokens : 1;
+      const timeoutMs = cfg.policy.driver === 'lmstudio' ? cfg.policy.timeoutMs : 1;
       const proposal = await this.deps.policy.chooseAction({
         allowedActions: ACTIONS,
         observationText,
         memoryText,
-        temperature: cfg.policy.temperature,
-        maxOutputTokens: cfg.policy.maxOutputTokens,
-        timeoutMs: cfg.policy.timeoutMs
+        temperature,
+        maxOutputTokens,
+        timeoutMs
       });
       let finalAction = proposal.action;
       let usedEpsilonOverride = false;
@@ -84,7 +87,7 @@ export class RunSingle {
         runId,
         runIndex,
         mode: { rng: cfg.rng.driver, policy: cfg.policy.driver },
-        envSeed: cfg.env.envSeed + runIndex,
+        envSeed: cfg.env.envSeed,
         step,
         ruleset: result.observation.ruleset,
         shockActive: result.observation.shockActive,

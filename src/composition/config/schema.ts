@@ -23,14 +23,29 @@ export const configSchema = z.object({
     bufferBytes: z.number().int().positive().optional(),
     filePath: z.string().optional()
   }),
-  policy: z.object({
-    driver: z.literal('lmstudio'),
-    baseUrl: z.string().url(),
-    model: z.string().min(1),
-    temperature: z.number(),
-    maxOutputTokens: z.number().int().positive(),
-    timeoutMs: z.number().int().positive()
-  }),
+  policy: z.union([
+    z.object({
+      driver: z.literal('lmstudio'),
+      baseUrl: z.string().url(),
+      model: z.string().min(1),
+      temperature: z.number(),
+      maxOutputTokens: z.number().int().positive(),
+      timeoutMs: z.number().int().positive()
+    }),
+    z.object({
+      driver: z.literal('mock'),
+      mode: z.enum(['cycle', 'fixed']),
+      action: z.enum(['UP', 'DOWN', 'LEFT', 'RIGHT', 'STAY']).optional(),
+      sequence: z.array(z.enum(['UP', 'DOWN', 'LEFT', 'RIGHT', 'STAY'])).min(1).optional()
+    }).superRefine((policy, ctx) => {
+      if (policy.mode === 'fixed' && !policy.action) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'policy.action is required when mode=fixed' });
+      }
+      if (policy.mode === 'cycle' && !policy.sequence) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'policy.sequence is required when mode=cycle' });
+      }
+    })
+  ]),
   logging: z.object({
     outDir: z.string().min(1)
   })

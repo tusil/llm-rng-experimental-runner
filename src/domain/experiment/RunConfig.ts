@@ -21,14 +21,21 @@ export interface RunConfig {
     bufferBytes?: number;
     filePath?: string;
   };
-  policy: {
-    driver: 'lmstudio';
-    baseUrl: string;
-    model: string;
-    temperature: number;
-    maxOutputTokens: number;
-    timeoutMs: number;
-  };
+  policy:
+    | {
+        driver: 'lmstudio';
+        baseUrl: string;
+        model: string;
+        temperature: number;
+        maxOutputTokens: number;
+        timeoutMs: number;
+      }
+    | {
+        driver: 'mock';
+        mode: 'cycle' | 'fixed';
+        action?: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'STAY';
+        sequence?: Array<'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'STAY'>;
+      };
   logging: {
     outDir: string;
   };

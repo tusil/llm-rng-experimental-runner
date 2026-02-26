@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { buildRunId } from '../../domain/experiment/RunId.js';
 import type { RunConfig } from '../../domain/experiment/RunConfig.js';
 import type { RunSummary } from '../../domain/experiment/RunSummary.js';
@@ -10,7 +11,7 @@ export class RunExperiment {
     const results: RunSummary[] = [];
     for (let i = 0; i < this.config.runs; i += 1) {
       const runId = buildRunId(i);
-      const runSingle = this.runSingleFactory(baseOutDir);
+      const runSingle = this.runSingleFactory(join(baseOutDir, 'runs', runId));
       const summary = await runSingle.execute(runId, i);
       results.push(summary);
     }
